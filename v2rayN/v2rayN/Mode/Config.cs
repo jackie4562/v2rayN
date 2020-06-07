@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using v2rayN.Base;
+using v2rayN.HttpProxyHandler;
+
 
 namespace v2rayN.Mode
 {
@@ -106,23 +108,28 @@ namespace v2rayN.Mode
             get; set;
         }
 
-
         /// <summary>
-        /// 启用Http代理
+        /// 监听状态
         /// </summary>
-        public bool sysAgentEnabled
+        public ListenerType listenerType
         {
             get; set;
         }
 
         /// <summary>
-        /// 监听状态 0-不改变 1-全局 2-PAC
+        /// 自定义服务器下载测速url
         /// </summary>
-        public int listenerType
+        public string speedTestUrl
         {
             get; set;
         }
-
+        /// <summary>
+        /// 自定义“服务器真连接延迟”测试url
+        /// </summary>
+        public string speedPingTestUrl
+        {
+            get; set;
+        }
         /// <summary>
         /// 自定义GFWList url
         /// </summary>
@@ -148,6 +155,14 @@ namespace v2rayN.Mode
         }
 
         /// <summary>
+        /// 去重时优先保留较旧（顶部）节点
+        /// </summary>
+        public bool keepOlderDedupl
+        {
+            get; set;
+        }
+
+        /// <summary>
         /// 视图刷新率
         /// </summary>
         public int statisticsFreshRate
@@ -155,25 +170,6 @@ namespace v2rayN.Mode
             get; set;
         }
 
-        /// <summary>
-        /// 统计数据缓存天数 [0, 30]
-        ///     * 0 关闭单独每天使用流量的缓存
-        ///     * 无论如何不会关闭总流量的缓存
-        /// </summary>
-        private uint cacheDays;
-        public uint CacheDays
-        {
-            get
-            {
-                return cacheDays;
-            }
-            set
-            {
-                if (value < 0) cacheDays = 0;
-                else if (value > 30) cacheDays = 30;
-                else cacheDays = value;
-            }
-        }
 
         /// <summary>
         /// 自定义远程DNS
@@ -182,6 +178,15 @@ namespace v2rayN.Mode
         {
             get; set;
         }
+
+        /// <summary>
+        /// 是否允许不安全连接
+        /// </summary>
+        public bool defAllowInsecure
+        {
+            get; set;
+        }
+
         /// <summary>
         /// 订阅
         /// </summary>
@@ -193,6 +198,11 @@ namespace v2rayN.Mode
         /// UI
         /// </summary>
         public UIItem uiItem
+        {
+            get; set;
+        }
+
+        public List<string> userPacRule
         {
             get; set;
         }
@@ -296,7 +306,7 @@ namespace v2rayN.Mode
         {
             if (index < 0 || Utils.IsNullOrEmpty(vmess[index].allowInsecure))
             {
-                return true;
+                return defAllowInsecure;
             }
             return Convert.ToBoolean(vmess[index].allowInsecure);
         }
@@ -346,6 +356,16 @@ namespace v2rayN.Mode
             return vmess[index].getSummary();
         }
 
+        public string getItemId()
+        {
+            if (index < 0)
+            {
+                return string.Empty;
+            }
+
+            return vmess[index].getItemId();
+        }
+
         #endregion
 
     }
@@ -375,10 +395,9 @@ namespace v2rayN.Mode
 
         public string getSummary()
         {
-            string summary = string.Empty;
-            summary = string.Format("{0}-", ((EConfigType)configType).ToString());
+            string summary = string.Format("{0}-", ((EConfigType)configType).ToString());
             string[] arrAddr = address.Split('.');
-            string addr = string.Empty;
+            string addr;
             if (arrAddr.Length > 2)
             {
                 addr = $"{arrAddr[0]}***{arrAddr[arrAddr.Length - 1]}";
@@ -429,6 +448,14 @@ namespace v2rayN.Mode
             }
             return subid.Substring(0, 4);
         }
+
+        public string getItemId()
+        {
+            string itemId = $"{address}{port}{requestHost}{path}";
+            itemId = Utils.Base64Encode(itemId);
+            return itemId;
+        }
+
         /// <summary>
         /// 版本(现在=2)
         /// </summary>
@@ -473,7 +500,7 @@ namespace v2rayN.Mode
             get; set;
         }
         /// <summary>
-        /// tcp,kcp,ws
+        /// tcp,kcp,ws,h2,quic
         /// </summary>
         public string network
         {
@@ -677,10 +704,16 @@ namespace v2rayN.Mode
     [Serializable]
     public class UIItem
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        public int mainQRCodeWidth { get; set; } = 600;
 
+
+        public System.Drawing.Size mainSize
+        {
+            get; set;
+        }
+
+        public Dictionary<string, int> mainLvColWidth
+        {
+            get; set;
+        }
     }
 }

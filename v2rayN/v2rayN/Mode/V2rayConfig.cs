@@ -281,6 +281,11 @@ namespace v2rayN.Mode
         /// 
         /// </summary>
         public bool enabled { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int concurrency { get; set; }
     }
 
     public class Response
@@ -310,7 +315,7 @@ namespace v2rayN.Mode
         /// </summary>
         public string port { get; set; }
 
-        public string inboundTag { get; set; }
+        public List<string> inboundTag { get; set; }
         /// <summary>
         /// 
         /// </summary>
